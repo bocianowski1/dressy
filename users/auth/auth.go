@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
@@ -17,10 +16,10 @@ const (
 )
 
 func NewGoogleAuth() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	panic("Error loading .env file")
+	// }
 
 	cookieStoreKey := os.Getenv("COOKIE_STORE_KEY")
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")

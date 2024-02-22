@@ -1,39 +1,42 @@
 package handlers
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/bocianowski1/users/db"
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi"
 )
 
-func HandleGetUsers(c *fiber.Ctx) error {
+func HandleGetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := db.GetUsers()
 	if err != nil {
-		return err
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	return c.JSON(users)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+	}
 }
 
-func HandleGetUserByUsername(c *fiber.Ctx) error {
-	username := c.Params("username")
+func HandleGetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+
 	user, err := db.GetUserByUsername(username)
 	if err != nil {
-		return err
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	return c.JSON(user)
-}
-
-func HandleUserExistsUnprotected(c *fiber.Ctx) error {
-	username := c.Params("username")
-	exists, err := db.UserExists(username)
-	if err != nil {
-		return err
+	if user == nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
 	}
 
-	if !exists {
-		return c.SendStatus(fiber.StatusNotFound)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 	}
-
-	return c.SendStatus(fiber.StatusOK)
 }

@@ -7,13 +7,13 @@ COPY . .
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o auth
+RUN CGO_ENABLED=0 GOOS=linux go build -o users
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/auth .
+COPY --from=builder /app/users .
 
-EXPOSE 8080
-CMD ["./auth"]
+EXPOSE 6060
+CMD ["./users"]

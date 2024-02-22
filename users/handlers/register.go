@@ -3,12 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/bocianowski1/users/db"
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 type RegisterRequest struct {
@@ -17,30 +17,35 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
-func HandleRegister(c *fiber.Ctx) error {
+func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var registerReq RegisterRequest
-	if err := json.Unmarshal(c.Body(), &registerReq); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&registerReq); err != nil {
 		log.Println("Error unmarshalling register request", err)
-		return err
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
 	}
+	defer r.Body.Close()
 
 	username := registerReq.Username
 	name := registerReq.Name
 	pass := registerReq.Password
 
 	if username == "" || pass == "" || name == "" {
-		log.Println("Username, name or password empty")
-		return c.SendStatus(fiber.StatusBadRequest)
+		log.Println("Username, name, or password empty")
+		http.Error(w, "Username, name, or password empty", http.StatusBadRequest)
+		return
 	}
 
 	user, err := db.GetUserByUsername(username)
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	if user != nil {
 		log.Println("User already exists")
-		return c.SendStatus(fiber.StatusBadRequest)
+		http.Error(w, "User already exists", http.StatusBadRequest)
+		return
 	}
 
 	user = &db.User{
@@ -51,7 +56,8 @@ func HandleRegister(c *fiber.Ctx) error {
 
 	if err := db.CreateUser(user); err != nil {
 		log.Println("Error creating user", err)
-		return c.SendStatus(fiber.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	claims := jwt.MapClaims{
@@ -64,14 +70,17 @@ func HandleRegister(c *fiber.Ctx) error {
 
 	if signKey == "" {
 		log.Println("SIGNING_KEY not set")
-		return c.SendStatus(fiber.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	t, err := token.SignedString([]byte(signKey))
 	if err != nil {
 		log.Println("Error signing token", err)
-		return c.SendStatus(fiber.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	return c.JSON(fiber.Map{"token": t, "user": user})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"token": t, "user": user})
 }
