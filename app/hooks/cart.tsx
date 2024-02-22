@@ -1,43 +1,53 @@
 import { createContext, useContext, useState } from "react";
 import type { Clothing } from "../constants/types";
 
+interface CartItem {
+  item: Clothing;
+  count: number;
+}
+
 const CartContext = createContext({
-  cartItems: [] as Clothing[],
-  updateCart: (newClothing: Clothing, clothingToRemove?: Clothing[]) => {},
+  cartItems: [] as CartItem[],
+  // updateCart: (
+  //   newClothing: Clothing,
+  //   count: number,
+  //   clothingToRemove?: Clothing[]
+  // ) => {},
   addToCart: (newClothing: Clothing) => {},
   removeFromCart: (clothingToRemove: Clothing) => {},
   clearCart: () => {},
-  getCartTotal: () => {},
-  getItemCount: (item: Clothing) => {},
+  getCartTotal: () => 0 as number,
+  getCartFormattedTotal: (amount?: number) => "" as string,
+  getItemCount: (item: Clothing) => 0 as number,
 });
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [cartItems, setCartItems] = useState<Clothing[]>([]);
-  const updateCart = (newClothing: Clothing, clothingToRemove?: Clothing[]) => {
-    if (cartItems.includes(newClothing)) {
-      setCartItems(cartItems.filter((item) => item !== newClothing));
-      return;
-    }
-    if (clothingToRemove) {
-      const newCartItems = cartItems.filter((item) => {
-        return !clothingToRemove.includes(item);
-      });
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-      setCartItems(newCartItems);
-    } else {
-      setCartItems([...cartItems, newClothing]);
-    }
-  };
+  const findCartItemIndex = (clothing: Clothing) =>
+    cartItems.findIndex((ci) => ci.item.id === clothing.id);
 
   const addToCart = (newClothing: Clothing) => {
-    if (!cartItems.includes(newClothing)) {
-      setCartItems([...cartItems, newClothing]);
+    const itemIndex = findCartItemIndex(newClothing);
+    if (itemIndex > -1) {
+      const newCartItems = [...cartItems];
+      newCartItems[itemIndex].count += 1;
+      setCartItems(newCartItems);
+    } else {
+      setCartItems([...cartItems, { item: newClothing, count: 1 }]);
     }
   };
 
   const removeFromCart = (clothingToRemove: Clothing) => {
-    if (cartItems.includes(clothingToRemove)) {
-      setCartItems(cartItems.filter((item) => item !== clothingToRemove));
+    const itemIndex = findCartItemIndex(clothingToRemove);
+    if (itemIndex > -1) {
+      if (cartItems[itemIndex].count > 1) {
+        const newCartItems = [...cartItems];
+        newCartItems[itemIndex].count -= 1;
+        setCartItems(newCartItems);
+      } else {
+        setCartItems(cartItems.filter((_, index) => index !== itemIndex));
+      }
     }
   };
 
@@ -45,29 +55,39 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCartItems([]);
   };
 
-  const getCartTotal = (): string => {
-    const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const getCartTotal = () => {
+    return cartItems.reduce(
+      (sum, { item, count }) => sum + item.price * count,
+      0
+    );
+  };
+
+  const getCartFormattedTotal = (amount?: number) => {
     const formatter = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     });
-
+    if (amount) {
+      return formatter.format(amount);
+    }
+    const total = getCartTotal();
     return formatter.format(total);
   };
 
   const getItemCount = (item: Clothing) => {
-    return cartItems.filter((cartItem) => cartItem === item).length;
+    const cartItem = cartItems.find((ci) => ci.item.id === item.id);
+    return cartItem ? cartItem.count : 0;
   };
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
-        updateCart,
         addToCart,
         removeFromCart,
         clearCart,
         getCartTotal,
+        getCartFormattedTotal,
         getItemCount,
       }}
     >

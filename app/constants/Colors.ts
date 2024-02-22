@@ -1,5 +1,5 @@
 export default {
-  primary: "lightgreen",
+  primary: "#90ee90",
   dark: "#1A1A1A",
   blue: "#1b76f5",
   lightGray: "#acaeb0",

@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Clothing } from "@/constants/types";
 import { clothing } from "../../data";
 import { useLikedItems } from "../../hooks/liked-items";
+import { useCart } from "../../hooks/cart";
 
 const Details = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,6 +16,7 @@ const Details = () => {
   const router = useRouter();
 
   const { updateLikedItems, likedItems } = useLikedItems();
+  const { getCartFormattedTotal } = useCart();
 
   useEffect(() => {
     const item = clothing.find((item) => `${item.id}` === id);
@@ -122,7 +124,7 @@ const Details = () => {
               marginTop: 10,
             }}
           >
-            $ {clothingItem?.price}.00
+            {getCartFormattedTotal(clothingItem?.price)}
           </Text>
           <View
             style={{

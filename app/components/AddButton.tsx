@@ -6,10 +6,10 @@ import { SimpleLineIcons } from "@expo/vector-icons";
 import { useCart } from "../hooks/cart";
 
 const AddButton = ({ clothingItem }: { clothingItem: Clothing }) => {
-  const { updateCart } = useCart();
+  const { addToCart } = useCart();
   return (
     <TouchableOpacity
-      onPress={() => updateCart(clothingItem)}
+      onPress={() => addToCart(clothingItem)}
       style={{
         position: "absolute",
         top: 55,

@@ -47,6 +47,22 @@ services:
     networks:
       - app-network
 
+  payments:
+    build:
+      context: ./payments
+      dockerfile: ./Dockerfile
+    container_name: ${APP}-payments
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    restart: always
+    depends_on:
+      - postgres
+      - users
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge

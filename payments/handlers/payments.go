@@ -3,65 +3,48 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/checkout/session"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/paymentintent"
 )
 
-func HandleCheckoutSession(c *fiber.Ctx) error {
-	sessionID := c.Query("sessionId")
-	if sessionID == "" {
-		log.Println("No session ID provided")
-		return c.SendStatus(400)
+func HandleCreatePaymentIntent(c *fiber.Ctx) error {
+	stripe.Key = "sk_test_51OmgDGB5rVWwVVGYxZCm35CJT1MRBZ1PvYyqrT5Rk3gjOwjOYBgmZRyAMrHt01eVS0gYue4bPiJbBgmeTgPy1J6H00l3hAx8JU"
+	type productReq struct {
+		ProductID string  `json:"product_id"`
+		Price     float64 `json:"price"`
 	}
 
-	s, err := session.Get(sessionID, nil)
-	if err != nil {
-		log.Println(err)
-		return c.SendStatus(500)
+	var product productReq
+	if err := c.BodyParser(&product); err != nil {
+		log.Println("Error unmarshalling product request", err)
+		return c.Status(http.StatusBadRequest).SendString("Bad request")
 	}
 
-	return c.JSON(s)
-}
+	log.Printf("Price: %v", product.Price)
 
-func HandleCreateCheckoutSession(c *fiber.Ctx) error {
-	type request struct {
-		Quantity int `json:"quantity"`
-	}
+	// productID := strconv.FormatUint(uint64(product.Price), 10)
 
-	var body request
-	if err := c.BodyParser(&body); err != nil {
-		log.Println(err)
-		return c.SendStatus(400)
-	}
-
-	quantity, err := strconv.ParseInt(strconv.Itoa(body.Quantity), 10, 64)
-	if err != nil {
-		log.Println(err)
-		return c.SendStatus(400)
-	}
-
-	domainURL := "exp://192.168.10.152:8081"
-
-	params := &stripe.CheckoutSessionParams{
-		SuccessURL: stripe.String(domainURL + "/success.html?session_id={CHECKOUT_SESSION_ID}"),
-		CancelURL:  stripe.String(domainURL + "/canceled.html"),
-		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				Quantity: stripe.Int64(quantity),
-				Amount:   stripe.Int64(1000),
-				Currency: stripe.String(string(stripe.CurrencyNOK)),
-			},
+	params := &stripe.PaymentIntentParams{
+		Amount:   stripe.Int64(int64(product.Price)), // øre to NOK conversion
+		Currency: stripe.String(string(stripe.CurrencyNOK)),
+		AutomaticPaymentMethods: &stripe.PaymentIntentAutomaticPaymentMethodsParams{
+			Enabled: stripe.Bool(true),
 		},
-		// AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{Enabled: stripe.Bool(true)},
 	}
 
-	s, err := session.New(params)
+	pi, err := paymentintent.New(params)
 	if err != nil {
-		return c.Redirect(s.CancelURL, http.StatusTemporaryRedirect)
+		log.Println("Error creating payment intent", err)
+		return c.Status(http.StatusInternalServerError).SendString("Internal server error")
 	}
 
+	log.Printf("pi.New: %v", pi.ClientSecret)
+
+	return c.JSON(fiber.Map{
+		"payment_intent": pi.ClientSecret,
+		"customer_id":    "cus_J9",
+		"ephemeral_key":  "ek_test_1",
+	})
 }
