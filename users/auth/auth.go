@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
@@ -21,9 +21,22 @@ func NewGoogleAuth() {
 	// 	panic("Error loading .env file")
 	// }
 
-	cookieStoreKey := os.Getenv("COOKIE_STORE_KEY")
-	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
-	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	// 	COOKIE_STORE_KEY=secret
+	// GOOGLE_CLIENT_ID=30532408938-ir339dgfujojvlmhbfcten6qob8j435u.apps.googleusercontent.com
+	// GOOGLE_CLIENT_SECRET=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
+
+	cookieStoreKey := "secret"
+	googleClientID := "30532408938-ir339dgfujojvlmhbfcten6qob8j435u.apps.googleusercontent.com"
+	googleClientSecret := "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"
+	// cookieStoreKey := os.Getenv("COOKIE_STORE_KEY")
+	// googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	// googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+
+	if cookieStoreKey == "" || googleClientID == "" || googleClientSecret == "" {
+		panic("Missing environment variables")
+	} else {
+		fmt.Println("cookieStoreKey: ", cookieStoreKey)
+	}
 
 	store := sessions.NewCookieStore([]byte(cookieStoreKey))
 	store.Options = &sessions.Options{

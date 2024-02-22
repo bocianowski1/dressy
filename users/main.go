@@ -16,7 +16,13 @@ func main() {
 
 	db.Init()
 	auth.NewGoogleAuth()
-	server := NewServer()
+	server := &http.Server{
+		Addr:         ":6060",
+		Handler:      registerRoutes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
 
 	err := server.ListenAndServe()
 	if err != nil {
@@ -24,25 +30,13 @@ func main() {
 	}
 }
 
-func NewServer() *http.Server {
-	server := &http.Server{
-		Addr:         ":6060",
-		Handler:      RegisterRoutes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-	return server
-}
-
-func RegisterRoutes() http.Handler {
+func registerRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
 	// Email/Password
-	r.Post("/login", handlers.HandleLogin)
-	r.Post("/register", handlers.HandleRegister)
+	r.Post("/auth/login", handlers.HandleLogin)
+	r.Post("/auth/register", handlers.HandleRegister)
 
 	// Google OAuth
 	r.Get("/auth/{provider}/callback", handlers.HandleGoogleCallback)

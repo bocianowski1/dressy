@@ -11,14 +11,14 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
-type contextKey string
+// type contextKey string
 
-const providerKey contextKey = "provider"
+// const providerKey contextKey = "provider"
 
 func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	provider := chi.URLParam(r, "provider")
-	r = r.WithContext(context.WithValue(context.Background(), providerKey, provider))
+	r = r.WithContext(context.WithValue(context.Background(), "provider", provider))
 
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
@@ -52,6 +52,6 @@ func HandleGoogleLogout(w http.ResponseWriter, r *http.Request) {
 
 func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
-	r = r.WithContext(context.WithValue(context.Background(), providerKey, provider))
+	r = r.WithContext(context.WithValue(context.Background(), "provider", provider))
 	gothic.BeginAuthHandler(w, r)
 }

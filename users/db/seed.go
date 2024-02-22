@@ -5,6 +5,7 @@ import "log"
 func Seed() {
 	admin := &User{
 		Username:  "admin",
+		Email:     "addy.m@gmail.com",
 		Name:      "Addy",
 		Password:  "admin",
 		Followers: []*User{},
@@ -12,6 +13,7 @@ func Seed() {
 	}
 	guest := &User{
 		Username:  "guest",
+		Email:     "gustav.gg@gmail.com",
 		Name:      "Gus",
 		Password:  "guest",
 		Followers: []*User{},

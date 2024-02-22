@@ -15,5 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/users .
 
+ENV docker true
+
 EXPOSE 6060
 CMD ["./users"]

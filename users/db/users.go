@@ -7,6 +7,7 @@ import (
 type User struct {
 	gorm.Model
 	Username  string  `json:"username" gorm:"unique" validate:"required"`
+	Email     string  `json:"email" gorm:"unique" validate:"required,email"`
 	Name      string  `json:"name" validate:"required"`
 	Password  string  `json:"password" validate:"required"`
 	Followers []*User `gorm:"many2many:followers;"`
